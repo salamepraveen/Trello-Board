@@ -1,3 +1,5 @@
+const jwt = require("jsonwebtoken");
+
 function authMiddleware(req,res,next){
     const token=req.headers.token;
 
@@ -9,15 +11,15 @@ function authMiddleware(req,res,next){
     }
 
     const decoded=jwt.verify(token,"spidey-super-secret-key");
-    const username=decoded.username;
-    if(!username){
+    const userId=decoded.userId;
+    if(!userId){
         res.status(403).json({
             message:"malformed token"
         })
         return;
     }
 
-    req.username=username;
+    req.userId=userId;
     next();
 }
 

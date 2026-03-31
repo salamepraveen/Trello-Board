@@ -6,33 +6,23 @@ const express=require("express");
 const jwt=require("jsonwebtoken");
 const { authMiddleware } = require("./middleware");
 
-const USERS_ID=1;
-const ORGANIZATION_ID=1;
-const BOARD_ID=1;
-const ISSUES_ID=1;
+let USERS_ID=1;
+let ORGANIZATION_ID=1;
+let BOARD_ID=1;
+let ISSUES_ID=1;
 
 const USERS=[{
-    id:1,
+    id:0,
     username:"prav",
-    password:"123123"
-},{
-    id:2,
-    username:"spidey",
     password:"123123"
 }]
 
 const ORGANIZATIONS=[{
-    id:1,
+    id:0,
     title:"100xdevs",
     description:"Learning coding platform",
-    admin:"prav",
+    admin:0,
     members:[2]
-},{
-    id:1,
-    title:"spidey",
-    description:"Experimenting",
-    admin:1,
-    members:[]
 }]
 
 const BOARDS=[{
@@ -119,14 +109,14 @@ ORGANIZATIONS.push({
     })
 })
 
-app.post("/add-member-to-organization",(req,res)=>{
-        const userID=req.userID;
-        const organizationId=req.body.organizationId;
+app.post("/add-member-to-organization",authMiddleware,(req,res)=>{
+        const userId=req.userId;
+        const organizationId=req.body.organizationId
         const memberUserUsername=req.body.memberUserUsername
         
         const organization=ORGANIZATIONS.find(org=>org.id===organizationId);
 
-        if(!organization||organization.admin!==userID){
+        if(!organization||organization.admin!==userId){
             res.status(411).json({
                 message:"Either this org does exist or you are not admin of this org"
             })
@@ -160,6 +150,32 @@ app.post("/issue",(req,res)=>{
 
 
 // get
+
+app.get("/organizations",authMiddleware,(req,res)=>{
+    const userId=req.userId;
+    const organizationId = parseInt( req.query.organizationId);
+    const organization=ORGANIZATIONS.find(org=>org.id==organizationId);
+
+    if(!organization||organization.admin!==userId){
+        res.status(411).json({
+            message:"Either this org does not exit or you are not an admin of this org"
+        })
+        return ;
+    }
+
+    res.json({
+        organization:{
+            ...organization,
+            members:organization.members.map(memberId=>{
+                const user=USERS.find(user=>user.id===memberId);
+                return{
+                    id:user.id,
+                    username:user.username
+                }
+            })
+        }
+    })
+})
 app.get("/boards/:organization",(req,res)=>{
 
 })
