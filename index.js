@@ -105,10 +105,48 @@ app.post("/signin",(req,res)=>{
 app.post("/organization",authMiddleware,(req,res)=>{
 // token	- eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc3NDk3NzEyNn0.KZmih-aY_0VZfADm6Kf0VKPkdFEmXqpofz_Nx3ekt6A
 
-
+const userId=req.userId;
+ORGANIZATIONS.push({
+    id:ORGANIZATION_ID++,
+    title:req.body.title,
+    description:req.body.description,
+    admin:userId,
+    members:[]
+})
+    res.json({
+        message:"Org created",
+        id:ORGANIZATION_ID-1
+    })
 })
 
 app.post("/add-member-to-organization",(req,res)=>{
+        const userID=req.userID;
+        const organizationId=req.body.organizationId;
+        const memberUserUsername=req.body.memberUserUsername
+        
+        const organization=ORGANIZATIONS.find(org=>org.id===organizationId);
+
+        if(!organization||organization.admin!==userID){
+            res.status(411).json({
+                message:"Either this org does exist or you are not admin of this org"
+            })
+            return;
+        }
+
+        const memberUser=USERS.find(u=>u.username===memberUserUsername);
+        if(!memberUser){
+            res.status(411).json({
+                message:"No user with this username exists in our db"
+            })
+            return ;
+        }
+
+        organization.members.push(memberUser.id);
+
+        res.json({
+            message:"New member added!"
+        })
+
 
 })
 
@@ -142,7 +180,32 @@ app.put("/issues",(req,res)=>{
 
 // Delete
 app.delete("/delete-members",(req,res)=>{
+    const userID=req.userID;
+        const organizationId=req.body.organizationId;
+        const memberUserUsername=req.body.memberUserUsername;
+        
+        const organization=ORGANIZATIONS.find(org=>org.id===organizationId);
 
+        if(!organization||organization.admin!==userID){
+            res.status(411).json({
+                message:"Either this org does exist or you are not admin of this org"
+            })
+            return;
+        }
+
+        const memberUser=USERS.find(u=>u.username===memberUserUsername);
+        if(!memberUser){
+            res.status(411).json({
+                message:"No user with this username exists in our db"
+            })
+            return ;
+        }
+
+        organization.members=organization.members.filter(user=>user.id!==memberUser.id)
+
+        res.json({
+            message:"member deleted"
+        })
 })
 
 app.listen(3000);
